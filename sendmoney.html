@@ -7,34 +7,115 @@
   <!-- jQuery y jQuery UI desde CDN -->
   <link rel="stylesheet" href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css">
   <style>
-    /* Estilos simples para efectos y validación */
-    #balance { font-weight: bold; }
-    .error { border: 1px solid #e74c3c !important; box-shadow: 0 0 6px rgba(231,76,60,0.4); }
-    .msg { display:none; padding:10px; margin-top:10px; border-radius:4px; }
-    .msg.success { background:#e9f7ef; color:#2d6a4f; border:1px solid #b7e4c7; }
-    .msg.error { background:#fdecea; color:#922b21; border:1px solid #f5c6cb; }
-    #history li { display:none; margin-bottom:6px; padding:6px; background:#f8f9fa; border-radius:4px; }
+    /* Fondo gris claro y centrado vertical/horizontal */
+    html,body { height:100%; margin:0; }
+    body {
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      background: #f3f4f6; /* gris claro */
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+      color:#0b1220;
+    }
+
+    /* Panel central */
+    .panel {
+      background: #ffffff;
+      padding: 28px;
+      border-radius: 10px;
+      width: 100%;
+      max-width: 520px;
+      box-shadow: 0 6px 24px rgba(11,18,32,0.08);
+      text-align: center;
+    }
+
+    h1 { margin-top:0; color:#0b1220; font-size:1.6rem; }
+
+    label { display:block; text-align:left; color:#0b1220; margin-bottom:6px; font-weight:600; }
+
+    input, button {
+      width:100%;
+      padding:10px 12px;
+      border-radius:6px;
+      border:1px solid rgba(11,18,32,0.08);
+      background: #fff;
+      color: #0b1220;
+      box-sizing: border-box;
+      font-size:1rem;
+    }
+
+    input::placeholder { color: rgba(11,18,32,0.45); }
+
+    .btn-primary {
+      background: linear-gradient(90deg,#2566c9,#1f7bd9);
+      border: none;
+      color: #fff;
+      font-weight:700;
+      cursor:pointer;
+      margin-top:8px;
+      padding:10px 12px;
+      border-radius:6px;
+    }
+    .btn-primary:disabled { opacity:0.6; cursor:not-allowed; }
+
+    /* Nuevo estilo para botón volver (verde) */
+    .btn-back {
+      background: linear-gradient(90deg,#28a745,#20a03a);
+      border: none;
+      color: #fff;
+      font-weight:600;
+      cursor:pointer;
+      margin-top:10px;
+      padding:10px 12px;
+      border-radius:6px;
+    }
+    .btn-back:active { transform: translateY(1px); }
+
+    /* Validación y mensajes */
+    #balance { font-weight: 700; color:#0b1220; display:block; margin-bottom:12px; }
+    .error { border: 1px solid #ff6b6b !important; box-shadow: 0 0 8px rgba(255,107,107,0.08); }
+    .msg { display:none; padding:10px; margin-top:10px; border-radius:6px; color:#07203a; }
+    .msg.success { background:#d6f5e3; border:1px solid #9fe0b2; }
+    .msg.error { background:#fdecea; border:1px solid #f5c6cb; color:#5e1919; }
+
+    #history { list-style:none; padding:0; margin-top:12px; text-align:left; }
+    #history li { display:none; margin-bottom:6px; padding:8px; background: #fafafa; border-radius:6px; color:#0b1220; border:1px solid rgba(11,18,32,0.03); }
+
+    /* Responsive */
+    @media (max-width:520px){
+      .panel { padding:18px; margin:12px; }
+    }
   </style>
 </head>
 <body>
-  <h1>Enviar dinero</h1>
+  <div class="panel">
+    <h1>Enviar dinero</h1>
 
-  <div>Saldo disponible: <span id="balance" data-init="1250.50">$1,250.50</span></div>
+    <div>Saldo disponible: <span id="balance" data-init="1250.50">$1,250.50</span></div>
 
-  <form id="send-form">
-    <label for="contact-search">Contacto</label><br>
-    <input id="contact-search" name="contact" placeholder="Buscar contacto..." autocomplete="off"><br><br>
+    <form id="send-form" autocomplete="off" style="margin-top:12px;">
+      <div style="margin-bottom:12px;">
+        <label for="contact-search">Contacto</label>
+        <input id="contact-search" name="contact" placeholder="Buscar contacto..." autocomplete="off">
+      </div>
 
-    <label for="amount">Cantidad</label><br>
-    <input id="amount" name="amount" type="text" placeholder="0.00"><br><br>
+      <div style="margin-bottom:8px;">
+        <label for="amount">Cantidad (enteros)</label>
+        <!-- aceptar solo enteros: step=1, patrón y oninput para eliminar decimales -->
+        <input id="amount" name="amount" type="number" placeholder="0" inputmode="numeric" min="0" step="1" pattern="\d*" oninput="this.value = this.value.replace(/[^0-9]/g,'');">
+      </div>
 
-    <button id="send-btn" type="submit">Enviar</button>
-  </form>
+      <button id="send-btn" class="btn-primary" type="submit">Enviar</button>
 
-  <div id="msg" class="msg"></div>
+      <!-- Botón para volver al menú: ahora en color verde y con clase btn-back -->
+      <button id="backMenu" type="button" class="btn-back">Volver al Menú</button>
+    </form>
 
-  <h3>Historial</h3>
-  <ul id="history"></ul>
+    <div id="msg" class="msg"></div>
+
+    <h3 style="margin-top:18px; color:#0b1220;">Historial</h3>
+    <ul id="history"></ul>
+  </div>
 
   <!-- Datos de ejemplo de contactos (puede venir del servidor) -->
   <script>
@@ -51,5 +132,16 @@
 
   <!-- Script principal (separado en archivo JS) -->
   <script src="assets/js/sendmoney.js"></script>
+
+  <!-- Manejo del botón volver al menú (usa goTo/goToDelay si existen) -->
+  <script>
+    $(function(){
+      $('#backMenu').on('click', function(){
+        if (typeof goTo === 'function') return goTo('menu.html');
+        if (typeof goToDelay === 'function') return goToDelay('menu.html', 200);
+        window.location.href = 'menu.html';
+      });
+    });
+  </script>
 </body>
 </html>

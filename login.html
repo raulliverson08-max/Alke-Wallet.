@@ -25,7 +25,13 @@
               <label for="password" class="form-label">Contraseña</label>
               <input id="password" type="password" class="form-control">
             </div>
-            <button type="submit" class="btn btn-primary w-100">Ingresar</button>
+
+            <!-- Botón Ingresar y mensaje al lado -->
+            <div class="d-flex align-items-center gap-3">
+              <button type="submit" class="btn btn-primary">Ingresar</button>
+              <small id="msg-help" class="text-muted">Utilice las claves genericas ya ingresadas ..</small>
+            </div>
+
           </form>
         </div>
       </div>
@@ -33,29 +39,53 @@
   </div>
 
   <!-- app central -->
-  <script src="JS/app.js"></script>
-
+  <script src="assets/app.js"></script>
   <script>
     $(function(){
-      // Envío con jQuery y selectores
+      // Credenciales genéricas para desarrollo
+      var GENERIC_EMAIL = "demo@demo.com";
+      var GENERIC_PASSWORD = "1234";
+
+      // Rellenar inputs con credenciales genéricas (opcional)
+      $("#email").val(GENERIC_EMAIL);
+      $("#password").val(GENERIC_PASSWORD);
+
+      // Helpers fallback
+      function setSaldoLocal(v){ localStorage.setItem('saldo', v); }
+      function initIfMissing() {
+        if (localStorage.getItem("saldo") === null) setSaldoLocal("0");
+        if (localStorage.getItem("transacciones") === null) localStorage.setItem("transacciones", JSON.stringify([]));
+        if (localStorage.getItem("contactos") === null) localStorage.setItem("contactos", JSON.stringify([]));
+      }
+      function showInfo(msg) {
+        if (typeof showAlert === 'function') showAlert("alert-container", msg, "info");
+        else $("#alert-container").html('<div class="alert alert-info">' + msg + '</div>');
+      }
+      function showError(msg) {
+        if (typeof showAlert === 'function') showAlert("alert-container", msg, "danger");
+        else $("#alert-container").html('<div class="alert alert-danger">' + msg + '</div>');
+      }
+      function redirectToMenu() {
+        if (typeof goToDelay === 'function') return goToDelay("menu.html", 600);
+        if (typeof goTo === 'function') return goTo("menu.html");
+        window.location.href = "menu.html";
+      }
+
+      // Envío con jQuery: validar y redirigir si coincide con credenciales genéricas
       $("#loginForm").on("submit", function(e){
         e.preventDefault();
+        var email = $.trim($("#email").val() || "");
+        var password = String($("#password").val() || "");
 
-        const email = $("#email").val();
-        const password = $("#password").val();
-
-        if (vacio(email) || vacio(password) || !validarEmail(email)) {
-          showAlert("alert-container", "Completa correctamente email y contraseña.", "danger");
+        if (email === GENERIC_EMAIL && password === GENERIC_PASSWORD) {
+          initIfMissing();
+          showInfo("Acceso con credenciales genéricas. Redirigiendo...");
+          redirectToMenu();
           return;
         }
 
-        // Si no existe saldo/arrays los inicializamos (no sobrescribimos si ya hay datos)
-        if (localStorage.getItem("saldo") === null) setSaldo(0);
-        if (localStorage.getItem("transacciones") === null) localStorage.setItem("transacciones", JSON.stringify([]));
-        if (localStorage.getItem("contactos") === null) localStorage.setItem("contactos", JSON.stringify([]));
-
-        showAlert("alert-container", "Inicio de sesión exitoso. Redirigiendo...", "success");
-        goToDelay("menu.html", 1200);
+        // Si no son las genéricas, avisar y no redirigir
+        showError("Credenciales incorrectas. Utilice las claves genéricas ya ingresadas.");
       });
     });
   </script>

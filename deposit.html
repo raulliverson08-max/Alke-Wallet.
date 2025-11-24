@@ -35,32 +35,57 @@
     </div>
   </div>
 
-  <script src="JS/app.js"></script>
+  <script src="assets/app.js"></script>
 
   <script>
     $(function(){
-      // Mostrar saldo al cargar
-      $("#saldoActual").text(formatearDinero(getSaldo()));
+      // Helpers locales (fallback si app.js no define funciones)
+      function formatMoney(v){ return '$' + Number(v).toLocaleString(undefined,{minimumFractionDigits:2, maximumFractionDigits:2}); }
+      function getSaldoLocal(){ var s = parseFloat(localStorage.getItem('saldo')); return isNaN(s)?0:s; }
+      function setSaldoLocal(v){ localStorage.setItem('saldo', v); return v; }
+      function validarNumero(n){ return Number.isFinite(n) && n > 0; }
+
+      // Inicializar visual del saldo (usar formatearDinero/getSaldo si están disponibles)
+      var saldoInicial = (typeof getSaldo === 'function') ? getSaldo() : getSaldoLocal();
+      $("#saldoActual").text((typeof formatearDinero === 'function') ? formatearDinero(saldoInicial) : formatMoney(saldoInicial));
 
       $("#depositForm").on("submit", function(e){
         e.preventDefault();
-        const monto = parseInt($("#monto").val(), 10);
-
+        var monto = parseFloat($("#monto").val());
         if (!validarNumero(monto)) {
-          showAlert("alert-container", "Ingrese un monto válido mayor a 0.", "danger");
+          if (typeof showAlert === 'function') showAlert("alert-container", "Ingrese un monto válido mayor a 0.", "danger");
+          else $("#alert-container").html('<div class="alert alert-danger">Ingrese un monto válido mayor a 0.</div>');
           return;
         }
 
-        const nuevoSaldo = realizarDeposito(monto); // usa función centralizada
-        showAlert("alert-container", "Depósito realizado con éxito.", "success");
-        $("#leyenda").text("Se depositaron " + formatearDinero(monto) + ". Nuevo saldo: " + formatearDinero(nuevoSaldo));
-        $("#saldoActual").text(formatearDinero(nuevoSaldo));
+        // Si existe realizarDeposito en app.js, usarla; si no, actualizar localStorage aquí
+        var nuevoSaldo;
+        if (typeof realizarDeposito === 'function') {
+          nuevoSaldo = realizarDeposito(monto);
+        } else {
+          var actual = (typeof getSaldo === 'function') ? getSaldo() : getSaldoLocal();
+          nuevoSaldo = actual + monto;
+          if (typeof setSaldo === 'function') setSaldo(nuevoSaldo); else setSaldoLocal(nuevoSaldo);
+        }
 
-        // Redirigir al menú luego de 2 segundos
-        goToDelay("menu.html", 2000);
+        // Mostrar mensajes y actualizar UI
+        var montoStr = (typeof formatearDinero === 'function') ? formatearDinero(monto) : formatMoney(monto);
+        var saldoStr = (typeof formatearDinero === 'function') ? formatearDinero(nuevoSaldo) : formatMoney(nuevoSaldo);
+
+        if (typeof showAlert === 'function') showAlert("alert-container", "Depósito realizado con éxito.", "success");
+        else $("#alert-container").html('<div class="alert alert-success">Depósito realizado con éxito.</div>');
+
+        $("#leyenda").text("Se depositaron " + montoStr + ". Nuevo saldo: " + saldoStr);
+        $("#saldoActual").text(saldoStr);
+
+        // Redirigir al menú luego de 2 segundos (usar goToDelay si existe)
+        if (typeof goToDelay === 'function') goToDelay("menu.html", 2000);
+        else setTimeout(function(){ window.location.href = "menu.html"; }, 2000);
       });
 
-      $("#volver").click(function(){ goTo("menu.html"); });
+      $("#volver").click(function(){
+        if (typeof goTo === 'function') goTo("menu.html"); else window.location.href = "menu.html";
+      });
     });
   </script>
 </body>

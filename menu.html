@@ -23,29 +23,81 @@
         <button id="btnSend" class="btn btn-primary">Enviar Dinero</button>
         <button id="btnTransactions" class="btn btn-secondary">Últimos Movimientos</button>
       </div>
+
+      <!-- Botón Salir -->
+      <div class="mt-3">
+        <button id="btnSalir" class="btn btn-danger w-100">Salir</button>
+      </div>
     </div>
   </div>
 
-  <script src="JS/app.js"></script>
+  <!-- Corregir ruta al script central -->
+  <script src="assets/app.js"></script>
 
   <script>
     $(function(){
-      // Mostrar saldo formateado
-      $("#saldoVisual").text(formatearDinero(getSaldo()));
+      // Mostrar saldo formateado (con fallback)
+      try {
+        $("#saldoVisual").text(typeof formatearDinero === 'function' ? formatearDinero(getSaldo()) : (function(v){ return '$' + Number(v).toLocaleString(undefined,{minimumFractionDigits:2, maximumFractionDigits:2}); })( (typeof getSaldo === 'function')? getSaldo() : parseFloat(localStorage.getItem('saldo')||0) ));
+      } catch(e){
+        console.error(e);
+      }
 
       $("#btnDeposit").click(function(){
         showAlert("alert-container", "Redirigiendo a depósito...", "info");
-        goToDelay("deposit.html", 700);
+        if (typeof goToDelay === 'function') return goToDelay("deposit.html", 700);
+        window.location.href = "deposit.html";
       });
 
       $("#btnSend").click(function(){
         showAlert("alert-container", "Redirigiendo a enviar dinero...", "info");
-        goToDelay("sendmoney.html", 700);
+        if (typeof goToDelay === 'function') return goToDelay("sendmoney.html", 700);
+        window.location.href = "sendmoney.html";
       });
 
+      // Intentar abrir transaction.html; si no existe, probar transactions.html; si no, avisar
       $("#btnTransactions").click(function(){
-        showAlert("alert-container", "Redirigiendo a últimos movimientos...", "info");
-        goToDelay("transactions.html", 700);
+        showAlert("alert-container", "Comprobando página de movimientos...", "info");
+
+        function navigateTo(url){
+          if (typeof goToDelay === 'function') return goToDelay(url, 700);
+          window.location.href = url;
+        }
+
+        // Probar transaction.html primero
+        fetch('transaction.html', { method: 'HEAD', cache: 'no-store' }).then(function(res){
+          if (res.ok) {
+            navigateTo('transaction.html');
+            return;
+          }
+          // Si no existe, probar transactions.html
+          return fetch('transactions.html', { method: 'HEAD', cache: 'no-store' });
+        }).then(function(res2){
+          if (res2 && res2.ok) {
+            navigateTo('transactions.html');
+            return;
+          }
+          // Si ninguno existe, mostrar error
+          showAlert("alert-container", "No se encontró la página de movimientos (transaction(s).html).", "danger");
+        }).catch(function(){
+          // En caso de error (p.ej. ambiente local), intentar redirección directa y dejar que el servidor devuelva 404 si aplica
+          // Primero intentar transaction.html, luego transactions.html
+          fetch('transaction.html').then(function(r){ if (r.ok) navigateTo('transaction.html'); else return fetch('transactions.html').then(function(r2){ if (r2.ok) navigateTo('transactions.html'); else showAlert("alert-container", "No se encontró la página de movimientos.", "danger"); }); }).catch(function(){ showAlert("alert-container", "No se encontró la página de movimientos.", "danger"); });
+        });
+      });
+
+      // Botón Salir: lleva a https://www.google.com
+      $('#btnSalir').on('click', function(){
+        if (typeof showAlert === 'function') showAlert("alert-container", "Saliendo de la aplicación...", "info");
+        // Intentar usar goToDelay/goTo si existen, sino navegar directamente
+        var target = 'https://www.google.com';
+        if (typeof goToDelay === 'function') {
+          try { return goToDelay(target, 400); } catch(e) { /* fallback */ }
+        }
+        if (typeof goTo === 'function') {
+          try { return goTo(target); } catch(e) { /* fallback */ }
+        }
+        window.location.href = target;
       });
     });
   </script>
