@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <title>Enviar dinero</title>
+
+  <!-- jQuery y jQuery UI desde CDN -->
+  <link rel="stylesheet" href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css">
+  <style>
+    /* Estilos simples para efectos y validación */
+    #balance { font-weight: bold; }
+    .error { border: 1px solid #e74c3c !important; box-shadow: 0 0 6px rgba(231,76,60,0.4); }
+    .msg { display:none; padding:10px; margin-top:10px; border-radius:4px; }
+    .msg.success { background:#e9f7ef; color:#2d6a4f; border:1px solid #b7e4c7; }
+    .msg.error { background:#fdecea; color:#922b21; border:1px solid #f5c6cb; }
+    #history li { display:none; margin-bottom:6px; padding:6px; background:#f8f9fa; border-radius:4px; }
+  </style>
+</head>
+<body>
+  <h1>Enviar dinero</h1>
+
+  <div>Saldo disponible: <span id="balance" data-init="1250.50">$1,250.50</span></div>
+
+  <form id="send-form">
+    <label for="contact-search">Contacto</label><br>
+    <input id="contact-search" name="contact" placeholder="Buscar contacto..." autocomplete="off"><br><br>
+
+    <label for="amount">Cantidad</label><br>
+    <input id="amount" name="amount" type="text" placeholder="0.00"><br><br>
+
+    <button id="send-btn" type="submit">Enviar</button>
+  </form>
+
+  <div id="msg" class="msg"></div>
+
+  <h3>Historial</h3>
+  <ul id="history"></ul>
+
+  <!-- Datos de ejemplo de contactos (puede venir del servidor) -->
+  <script>
+    // Lista de contactos de ejemplo; puede moverse a JSON real
+    window.ALW_CONTACTS = [
+      "Ana Pérez", "Andrés Gómez", "Carlos Ruiz", "María López", "Sofía Martínez",
+      "Jorge Díaz", "Luis Fernández", "Paola Castro"
+    ];
+  </script>
+
+  <!-- Cargar jQuery y jQuery UI -->
+  <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+  <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
+
+  <!-- Script principal (separado en archivo JS) -->
+  <script src="assets/js/sendmoney.js"></script>
+</body>
+</html>

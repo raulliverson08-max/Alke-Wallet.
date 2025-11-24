@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <title>Depósito</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+</head>
+<body class="bg-light">
+  <div class="container py-5">
+    <h2 class="text-center mb-3">Depósito</h2>
+
+    <div id="alert-container"></div>
+
+    <div class="card p-4 shadow">
+      <div class="mb-3">
+        <strong>Saldo actual:</strong> <span id="saldoActual"></span>
+      </div>
+
+      <form id="depositForm">
+        <div class="mb-3">
+          <label for="monto" class="form-label">Monto a depositar</label>
+          <input id="monto" type="number" class="form-control" min="1" step="1">
+        </div>
+
+        <button type="submit" class="btn btn-success w-100">Depositar</button>
+      </form>
+
+      <p id="leyenda" class="mt-3"></p>
+    </div>
+
+    <div class="mt-3">
+      <button id="volver" class="btn btn-link">Volver al Menú</button>
+    </div>
+  </div>
+
+  <script src="JS/app.js"></script>
+
+  <script>
+    $(function(){
+      // Mostrar saldo al cargar
+      $("#saldoActual").text(formatearDinero(getSaldo()));
+
+      $("#depositForm").on("submit", function(e){
+        e.preventDefault();
+        const monto = parseInt($("#monto").val(), 10);
+
+        if (!validarNumero(monto)) {
+          showAlert("alert-container", "Ingrese un monto válido mayor a 0.", "danger");
+          return;
+        }
+
+        const nuevoSaldo = realizarDeposito(monto); // usa función centralizada
+        showAlert("alert-container", "Depósito realizado con éxito.", "success");
+        $("#leyenda").text("Se depositaron " + formatearDinero(monto) + ". Nuevo saldo: " + formatearDinero(nuevoSaldo));
+        $("#saldoActual").text(formatearDinero(nuevoSaldo));
+
+        // Redirigir al menú luego de 2 segundos
+        goToDelay("menu.html", 2000);
+      });
+
+      $("#volver").click(function(){ goTo("menu.html"); });
+    });
+  </script>
+</body>
+</html>
+
