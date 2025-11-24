@@ -15,7 +15,7 @@
 
     <div class="card p-4 shadow">
       <div class="mb-3">
-        <h5>Saldo actual: <span id="saldoVisual"></span></h5>
+        <h5>Saldo actual: <span id="saldoVisual">$0.00</span></h5>
       </div>
 
       <div class="d-grid gap-2">
@@ -36,68 +36,52 @@
 
   <script>
     $(function(){
-      // Mostrar saldo formateado (con fallback)
-      try {
-        $("#saldoVisual").text(typeof formatearDinero === 'function' ? formatearDinero(getSaldo()) : (function(v){ return '$' + Number(v).toLocaleString(undefined,{minimumFractionDigits:2, maximumFractionDigits:2}); })( (typeof getSaldo === 'function')? getSaldo() : parseFloat(localStorage.getItem('saldo')||0) ));
-      } catch(e){
-        console.error(e);
+      // Helper fallback para alertas
+      function showAlertContainer(msg, type) {
+        if (typeof showAlert === 'function') return showAlert('alert-container', msg, type);
+        var cls = type === 'danger' ? 'alert-danger' : (type === 'success' ? 'alert-success' : (type === 'info' ? 'alert-info' : 'alert-secondary'));
+        $('#alert-container').html('<div class="alert ' + cls + '">' + msg + '</div>');
       }
 
-      $("#btnDeposit").click(function(){
-        showAlert("alert-container", "Redirigiendo a depósito...", "info");
-        if (typeof goToDelay === 'function') return goToDelay("deposit.html", 700);
-        window.location.href = "deposit.html";
+      // Helper redirigir con fallback
+      function navigateTo(url, delay) {
+        delay = delay || 0;
+        if (delay && typeof goToDelay === 'function') return goToDelay(url, delay);
+        if (delay && typeof setTimeout === 'function') return setTimeout(function(){ window.location.href = url; }, delay);
+        if (typeof goTo === 'function') return goTo(url);
+        window.location.href = url;
+      }
+
+      // Mostrar saldo (formateo con fallback)
+      try {
+        var saldoVal = (typeof getSaldo === 'function') ? getSaldo() : parseFloat(localStorage.getItem('saldo') || 0);
+        var saldoText = (typeof formatearDinero === 'function') ? formatearDinero(saldoVal) : '$' + Number(saldoVal).toLocaleString(undefined,{minimumFractionDigits:2, maximumFractionDigits:2});
+        $('#saldoVisual').text(saldoText);
+      } catch(e) {
+        $('#saldoVisual').text('$0.00');
+      }
+
+      // Botones con comportamiento
+      $('#btnDeposit').on('click', function(){
+        showAlertContainer('Redirigiendo a depósito...', 'info');
+        navigateTo('deposit.html', 300);
       });
 
-      $("#btnSend").click(function(){
-        showAlert("alert-container", "Redirigiendo a enviar dinero...", "info");
-        if (typeof goToDelay === 'function') return goToDelay("sendmoney.html", 700);
-        window.location.href = "sendmoney.html";
+      $('#btnSend').on('click', function(){
+        showAlertContainer('Redirigiendo a enviar dinero...', 'info');
+        navigateTo('sendmoney.html', 300);
       });
 
-      // Intentar abrir transaction.html; si no existe, probar transactions.html; si no, avisar
-      $("#btnTransactions").click(function(){
-        showAlert("alert-container", "Comprobando página de movimientos...", "info");
-
-        function navigateTo(url){
-          if (typeof goToDelay === 'function') return goToDelay(url, 700);
-          window.location.href = url;
-        }
-
-        // Probar transaction.html primero
-        fetch('transaction.html', { method: 'HEAD', cache: 'no-store' }).then(function(res){
-          if (res.ok) {
-            navigateTo('transaction.html');
-            return;
-          }
-          // Si no existe, probar transactions.html
-          return fetch('transactions.html', { method: 'HEAD', cache: 'no-store' });
-        }).then(function(res2){
-          if (res2 && res2.ok) {
-            navigateTo('transactions.html');
-            return;
-          }
-          // Si ninguno existe, mostrar error
-          showAlert("alert-container", "No se encontró la página de movimientos (transaction(s).html).", "danger");
-        }).catch(function(){
-          // En caso de error (p.ej. ambiente local), intentar redirección directa y dejar que el servidor devuelva 404 si aplica
-          // Primero intentar transaction.html, luego transactions.html
-          fetch('transaction.html').then(function(r){ if (r.ok) navigateTo('transaction.html'); else return fetch('transactions.html').then(function(r2){ if (r2.ok) navigateTo('transactions.html'); else showAlert("alert-container", "No se encontró la página de movimientos.", "danger"); }); }).catch(function(){ showAlert("alert-container", "No se encontró la página de movimientos.", "danger"); });
-        });
+      $('#btnTransactions').on('click', function(){
+        showAlertContainer('Redirigiendo a movimientos...', 'info');
+        // Preferir transactions.html (archivo existente). Si quieres transaction.html en su lugar, cambia aquí.
+        navigateTo('transactions.html', 300);
       });
 
-      // Botón Salir: lleva a https://www.google.com
+      // Botón salir -> google
       $('#btnSalir').on('click', function(){
-        if (typeof showAlert === 'function') showAlert("alert-container", "Saliendo de la aplicación...", "info");
-        // Intentar usar goToDelay/goTo si existen, sino navegar directamente
-        var target = 'https://www.google.com';
-        if (typeof goToDelay === 'function') {
-          try { return goToDelay(target, 400); } catch(e) { /* fallback */ }
-        }
-        if (typeof goTo === 'function') {
-          try { return goTo(target); } catch(e) { /* fallback */ }
-        }
-        window.location.href = target;
+        showAlertContainer('Saliendo...', 'info');
+        navigateTo('https://www.google.com', 300);
       });
     });
   </script>
